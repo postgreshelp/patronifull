@@ -56,3 +56,25 @@ tags:
     noloadbalance: false
     clonefrom: false
     nosync: false
+
+
+
+#########alos working
+
+bootstrap:
+    method: pgbackrest
+    pgbackrest:
+        command: pgbackrest --log-level-console=info --stanza=main --delta --type=time "--target=2024-04-14 14:27:00" --target-action=pause restore
+        keep_existing_recovery_conf: False
+        no_params: True
+        recovery_conf:
+          restore_command: pgbackrest --stanza=main archive-get %f %p
+          recovery_target_action: promote
+
+
+
+
+
+
+
+
