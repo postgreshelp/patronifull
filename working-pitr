@@ -1,0 +1,58 @@
+scope: postgres
+namespace: /db/
+name: pghelp01
+
+restapi:
+    listen: 192.168.110.222:8008
+    connect_address: 192.168.110.222:8008
+
+etcd3:
+    hosts: 192.168.110.222:2379,192.168.110.223:2379,192.168.110.224:2379
+
+bootstrap:
+    method: pgbackrest
+    pgbackrest:
+        command: pgbackrest --log-level-console=info --stanza=main --delta --type=time "--target=2024-04-14 11:37:42" --target-action=pause restore
+        keep_existing_recovery_conf: True
+        no_params: True
+        recovery_conf:
+          restore_command: pgbackrest --stanza=main archive-get %f %p
+          recovery_target_action: promote
+    dcs:
+        ttl: 30
+        loop_wait: 10
+        retry_timeout: 10
+        maximum_lag_on_failover: 1048576
+        postgresql:
+        use_pg_rewind: true
+    pg_hba:
+    - host replication replicator 127.0.0.1/32 md5
+    - host all  all 0.0.0.0/0  md5
+    - host replication replicator 192.168.110.222/0 md5
+    - host replication replicator 192.168.110.223/0 md5
+    - host replication replicator 192.168.110.224/0 md5
+
+postgresql:
+    listen: 192.168.110.222:5432
+    connect_address: 192.168.110.222:5432
+    data_dir: /u01/pgsql/16
+    bin_dir: /usr/pgsql-16/bin
+    authentication:
+        replication:
+            username: replicator
+            password: replicator
+        superuser:
+            username: postgres
+            password: postgres
+    parameters:
+        unix_socket_directories: '/run/postgresql/'
+watchdog:
+  mode: required
+  device: /dev/watchdog
+  safety_margin: 5
+
+tags:
+    nofailover: false
+    noloadbalance: false
+    clonefrom: false
+    nosync: false
